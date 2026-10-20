@@ -1,0 +1,32 @@
+{
+  "name": "the-last-clue-backend",
+  "version": "1.0.0",
+  "description": "Backend engine and API for THE LAST CLUE procedural mystery game",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "node --test src/**/__tests__/*.test.js",
+    "test:api": "node --test src/routes/__tests__/*.test.js",
+    "verify:graph": "node src/algorithms/verifyGraph.js",
+    "verify:backtracking": "node src/algorithms/verifyBacktracking.js",
+    "verify:generator": "node src/generators/verifyGenerator.js",
+    "verify:api": "node src/verifyApi.js"
+  },
+  "keywords": [
+    "dsa",
+    "procedural-generation",
+    "mystery-game",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
