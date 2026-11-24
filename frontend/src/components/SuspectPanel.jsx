@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../localization/LanguageContext';
 
 /**
  * SuspectPanel Component
@@ -16,6 +17,7 @@ export default function SuspectPanel({
   motivesMap = new Map()
 }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'poi'
+  const { t, getSuspectText, getLocationText, getWeaponText, getMotiveText } = useLanguage();
 
   const filteredSuspects = suspects.filter((s) => {
     if (filter === 'poi') return personsOfInterest.has(s.id);
@@ -26,9 +28,9 @@ export default function SuspectPanel({
     <div className="panel-container">
       <div className="panel-header-row">
         <div>
-          <h2 className="panel-title font-title">SUSPECT DOSSIERS</h2>
+          <h2 className="panel-title font-title">{t('suspectPanel.title')}</h2>
           <p className="panel-subtitle">
-            Individuals present at Blackwood Manor during the critical timeline.
+            {t('suspectPanel.subtitle')}
           </p>
         </div>
 
@@ -38,14 +40,14 @@ export default function SuspectPanel({
             className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
             onClick={() => setFilter('all')}
           >
-            All Suspects ({suspects.length})
+            {t('suspectPanel.filterAll')} ({suspects.length})
           </button>
           <button
             type="button"
             className={`filter-btn ${filter === 'poi' ? 'active' : ''}`}
             onClick={() => setFilter('poi')}
           >
-            Persons of Interest ({personsOfInterest.size})
+            {t('suspectPanel.filterPoi')} ({personsOfInterest.size})
           </button>
         </div>
       </div>
@@ -53,26 +55,31 @@ export default function SuspectPanel({
       <div className="suspects-grid">
         {filteredSuspects.map((suspect) => {
           const isPoi = personsOfInterest.has(suspect.id);
-          const initials = (suspect.name || suspect.id)
+          const localizedSuspect = getSuspectText(suspect.id);
+          const displayName = localizedSuspect.name || suspect.name || suspect.id;
+          const displayRole = localizedSuspect.role || suspect.role || 'Resident / Guest';
+          const displayTraits = localizedSuspect.traits?.length ? localizedSuspect.traits : (suspect.traits || []);
+
+          const initials = displayName
             .split(' ')
             .map((part) => part[0])
             .join('')
             .slice(0, 2)
             .toUpperCase();
 
-          // Resolve accessible locations names if mapped
+          // Resolve accessible locations names localized
           const accessLocNames = (suspect.accessLocations || [])
-            .map((locId) => locationsMap.get(locId)?.name || locId.replace('location_', '').replace(/_/g, ' '))
+            .map((locId) => getLocationText(locId).name || locationsMap.get(locId)?.name || locId)
             .join(', ');
 
-          // Resolve affiliated weapons
+          // Resolve affiliated weapons localized
           const weaponNames = (suspect.affiliatedWeapons || [])
-            .map((wId) => weaponsMap.get(wId)?.name || wId.replace('weapon_', '').replace(/_/g, ' '))
+            .map((wId) => getWeaponText(wId).name || weaponsMap.get(wId)?.name || wId)
             .join(', ');
 
-          // Resolve motives
+          // Resolve motives localized
           const motiveNames = (suspect.possibleMotives || [])
-            .map((mId) => motivesMap.get(mId)?.name || mId.replace('motive_', '').replace(/_/g, ' '))
+            .map((mId) => getMotiveText(mId).name || motivesMap.get(mId)?.name || mId)
             .join(', ');
 
           return (
@@ -82,7 +89,7 @@ export default function SuspectPanel({
             >
               {isPoi && (
                 <div className="poi-ribbon">
-                  ★ PERSON OF INTEREST
+                  {t('suspectPanel.poiRibbon')}
                 </div>
               )}
 
@@ -91,15 +98,15 @@ export default function SuspectPanel({
                   {initials}
                 </div>
                 <div>
-                  <h3 className="suspect-name">{suspect.name || suspect.id}</h3>
-                  <div className="suspect-role">{suspect.role || 'Resident / Guest'}</div>
+                  <h3 className="suspect-name">{displayName}</h3>
+                  <div className="suspect-role">{displayRole}</div>
                 </div>
               </div>
 
               {/* Psychological & Behavioral Traits */}
-              {suspect.traits && suspect.traits.length > 0 && (
-                <div className="traits-container" aria-label="Behavioral traits">
-                  {suspect.traits.map((trait) => (
+              {displayTraits.length > 0 && (
+                <div className="traits-container" aria-label={t('suspectPanel.traitsLabel')}>
+                  {displayTraits.map((trait) => (
                     <span key={trait} className="trait-pill">
                       #{trait}
                     </span>
@@ -111,21 +118,21 @@ export default function SuspectPanel({
               <div className="suspect-intel-section">
                 {accessLocNames && (
                   <div className="intel-row">
-                    <span className="intel-label">Estate Access:</span>
+                    <span className="intel-label">{t('suspectPanel.accessLabel')}</span>
                     <span className="intel-val">{accessLocNames}</span>
                   </div>
                 )}
 
                 {weaponNames && (
                   <div className="intel-row">
-                    <span className="intel-label">Affiliated Implements:</span>
+                    <span className="intel-label">{t('suspectPanel.weaponsLabel')}</span>
                     <span className="intel-val">{weaponNames}</span>
                   </div>
                 )}
 
                 {motiveNames && (
                   <div className="intel-row">
-                    <span className="intel-label">Documented Motives:</span>
+                    <span className="intel-label">{t('suspectPanel.motivesLabel')}</span>
                     <span className="intel-val">{motiveNames}</span>
                   </div>
                 )}
@@ -138,7 +145,7 @@ export default function SuspectPanel({
                   className={`btn-poi ${isPoi ? 'active' : ''}`}
                   onClick={() => onTogglePOI(suspect.id)}
                 >
-                  {isPoi ? '★ Unmark POI' : '☆ Mark as POI'}
+                  {isPoi ? t('suspectPanel.unmarkPoi') : t('suspectPanel.markPoi')}
                 </button>
 
                 {onSelectGraphNode && (
@@ -147,9 +154,9 @@ export default function SuspectPanel({
                     className="btn-poi"
                     style={{ flex: 'initial' }}
                     onClick={() => onSelectGraphNode(suspect.id)}
-                    title="Locate on Evidence Board"
+                    title={t('suspectPanel.viewOnBoard')}
                   >
-                    🕸️ Graph
+                    {t('suspectPanel.viewOnBoard')}
                   </button>
                 )}
 
@@ -157,9 +164,9 @@ export default function SuspectPanel({
                   type="button"
                   className="btn-direct-accuse"
                   onClick={() => onInitiateAccusation(suspect.id)}
-                  title={`File formal accusation against ${suspect.name}`}
+                  title={t('suspectPanel.accuseBtn')}
                 >
-                  ⚖️ Accuse
+                  {t('suspectPanel.accuseBtn')}
                 </button>
               </div>
             </article>
@@ -169,7 +176,7 @@ export default function SuspectPanel({
 
       {filteredSuspects.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#7a8699' }}>
-          No suspects currently flagged as Person of Interest.
+          {t('suspectPanel.emptyFilter')}
         </div>
       )}
     </div>

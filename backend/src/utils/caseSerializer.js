@@ -60,6 +60,7 @@ function serializePublicCase(caseData, options = {}) {
   const result = {
     caseId: caseData.caseId,
     seed: caseData.seed,
+    theme: caseData.theme || 'trophy',
     difficulty: caseData.difficulty,
     suspects: caseData.suspects || [],
     locations: caseData.locations || [],

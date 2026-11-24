@@ -64,10 +64,11 @@ class CaseService {
    * @param {Object} options - Case generation parameters.
    * @param {string} options.difficulty - 'easy' | 'medium' | 'hard' (case-insensitive).
    * @param {number|string} [options.seed] - Optional numeric seed.
+   * @param {string} [options.theme] - Optional theme ('trophy'|'science'|'treasure'|'library').
    * @returns {Object} Public API-safe case representation.
    * @throws {ValidationError} If input parameters are invalid.
    */
-  static generateCase({ difficulty, seed } = {}) {
+  static generateCase({ difficulty, seed, theme } = {}) {
     // 1. Validate & Normalize Difficulty
     if (difficulty === undefined || difficulty === null || typeof difficulty !== 'string' || difficulty.trim() === '') {
       throw new ValidationError('Difficulty is required. Allowed values: easy, medium, hard.');
@@ -108,7 +109,7 @@ class CaseService {
     }
 
     // 3. Call MysteryGenerator domain engine
-    const rawCaseData = MysteryGenerator.generateCase(finalSeed, normalizedDifficulty);
+    const rawCaseData = MysteryGenerator.generateCase(finalSeed, normalizedDifficulty, theme);
 
     // 4. Store active case in server-side session store with hidden solution
     const caseInstanceId = defaultCaseStore.storeCase(rawCaseData);

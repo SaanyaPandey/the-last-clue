@@ -70,11 +70,15 @@ export async function checkBackendHealth() {
  * @param {number|string} [options.seed] - Optional numeric seed
  * @returns {Promise<ApiResponse>}
  */
-export async function generateMysteryCase({ difficulty = 'medium', seed } = {}) {
+export async function generateMysteryCase({ difficulty = 'medium', seed, theme } = {}) {
   try {
     const payload = {
       difficulty: String(difficulty).toLowerCase()
     };
+
+    if (theme) {
+      payload.theme = theme;
+    }
 
     if (seed !== undefined && seed !== null && String(seed).trim() !== '') {
       const parsedSeed = Number(seed);

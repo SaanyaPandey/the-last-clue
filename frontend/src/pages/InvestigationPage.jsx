@@ -6,12 +6,15 @@ import SuspectPanel from '../components/SuspectPanel';
 import LocationPanel from '../components/LocationPanel';
 import InvestigationJournal from '../components/InvestigationJournal';
 import AccusationModal from '../components/AccusationModal';
+import CaseIntroduction from '../components/CaseIntroduction';
+import DetectiveBriefing from '../components/DetectiveBriefing';
 import PlayableMysteryGame from '../game/PlayableMysteryGame';
+import { useLanguage } from '../localization/LanguageContext';
 
 /**
  * InvestigationPage Component
  * Primary detective investigation workspace.
- * Centers the experience directly inside the playable 2.5D Crime Scene (Drawing Room),
+ * Centers the experience directly inside the playable 2.5D Crime Scene,
  * with contextual access to the Evidence Board, Suspects, Journal, and Accusation tools.
  */
 export default function InvestigationPage({
@@ -19,6 +22,11 @@ export default function InvestigationPage({
   onNewCase,
   onReturnToMenu
 }) {
+  const { t } = useLanguage();
+
+  // Investigation progression phases: 'intro' -> 'briefing' -> 'scene'
+  const [currentPhase, setCurrentPhase] = useState('intro');
+
   // 'scene' is the primary default playable room view; other views open as contextual dossiers
   const [activeTab, setActiveTab] = useState('scene'); // 'scene' | 'board' | 'clues' | 'suspects' | 'locations' | 'journal'
   const [examinedClueIds, setExaminedClueIds] = useState(new Set());
@@ -29,6 +37,16 @@ export default function InvestigationPage({
   const [isAccusationOpen, setIsAccusationOpen] = useState(false);
   const [preselectedSuspectId, setPreselectedSuspectId] = useState(null);
   const [submittedAccusation, setSubmittedAccusation] = useState(null);
+
+  // Reset phase and state whenever a new case is initiated
+  useEffect(() => {
+    setCurrentPhase('intro');
+    setExaminedClueIds(new Set());
+    setPersonsOfInterest(new Set());
+    setClueNotes({});
+    setGeneralNotes('');
+    setActiveTab('scene');
+  }, [caseData?.caseId]);
 
   const clues = caseData?.clues || [];
   const suspects = caseData?.suspects || [];
@@ -66,6 +84,15 @@ export default function InvestigationPage({
       } else {
         next.add(clueId);
       }
+      return next;
+    });
+  };
+
+  // Discover clue (always adds to examined set)
+  const handleDiscoverClue = (clueId) => {
+    setExaminedClueIds((prev) => {
+      const next = new Set(prev);
+      next.add(clueId);
       return next;
     });
   };
@@ -116,6 +143,32 @@ export default function InvestigationPage({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab]);
 
+  if (currentPhase === 'intro') {
+    return (
+      <div className="investigation-app">
+        <CaseIntroduction
+          caseData={caseData}
+          onComplete={() => setCurrentPhase('briefing')}
+          onSkip={() => setCurrentPhase('briefing')}
+        />
+      </div>
+    );
+  }
+
+  if (currentPhase === 'briefing') {
+    return (
+      <div className="investigation-app">
+        <div className="briefing-fullscreen-page">
+          <DetectiveBriefing
+            caseData={caseData}
+            onEnterInvestigation={() => setCurrentPhase('scene')}
+            onBackToIntro={() => setCurrentPhase('intro')}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="investigation-app">
       {/* Top Dossier Bar */}
@@ -127,66 +180,68 @@ export default function InvestigationPage({
         onOpenAccusation={() => handleInitiateAccusation(null)}
       />
 
-      {/* Investigation Navigation Tabs */}
-      <nav className="investigation-nav" aria-label="Investigation dossier sections">
-        <div className="nav-tabs-container">
-          <button
-            type="button"
-            className={`nav-tab ${activeTab === 'scene' ? 'active' : ''}`}
-            onClick={() => setActiveTab('scene')}
-          >
-            <span>🕵️ Crime Scene Room</span>
-            <span className="badge badge-amber font-mono" style={{ fontSize: '0.65rem' }}>PLAYABLE</span>
-          </button>
+      {/* Investigation Navigation Tabs (Visible when viewing dossiers outside the crime scene) */}
+      {activeTab !== 'scene' && (
+        <nav className="investigation-nav" aria-label="Investigation dossier sections">
+          <div className="nav-tabs-container">
+            <button
+              type="button"
+              className={`nav-tab ${activeTab === 'scene' ? 'active' : ''}`}
+              onClick={() => setActiveTab('scene')}
+            >
+              <span>🕵️ {t('nav.crimeScene')}</span>
+              <span className="badge badge-amber font-mono" style={{ fontSize: '0.65rem' }}>PLAYABLE</span>
+            </button>
 
-          <button
-            type="button"
-            className={`nav-tab ${activeTab === 'board' ? 'active' : ''}`}
-            onClick={() => setActiveTab('board')}
-          >
-            <span>🕸️ Evidence Board</span>
-            <span className="nav-counter">{graph.nodes.length}</span>
-          </button>
+            <button
+              type="button"
+              className={`nav-tab ${activeTab === 'board' ? 'active' : ''}`}
+              onClick={() => setActiveTab('board')}
+            >
+              <span>🕸️ {t('nav.evidenceBoard')}</span>
+              <span className="nav-counter">{graph.nodes.length}</span>
+            </button>
 
-          <button
-            type="button"
-            className={`nav-tab ${activeTab === 'clues' ? 'active' : ''}`}
-            onClick={() => setActiveTab('clues')}
-          >
-            <span>🔍 Forensic Clues</span>
-            <span className="nav-counter">
-              {examinedClueIds.size}/{clues.length}
-            </span>
-          </button>
+            <button
+              type="button"
+              className={`nav-tab ${activeTab === 'clues' ? 'active' : ''}`}
+              onClick={() => setActiveTab('clues')}
+            >
+              <span>🔍 {t('nav.clues')}</span>
+              <span className="nav-counter">
+                {examinedClueIds.size}/{clues.length}
+              </span>
+            </button>
 
-          <button
-            type="button"
-            className={`nav-tab ${activeTab === 'suspects' ? 'active' : ''}`}
-            onClick={() => setActiveTab('suspects')}
-          >
-            <span>👤 Suspect Profiles</span>
-            <span className="nav-counter">{suspects.length}</span>
-          </button>
+            <button
+              type="button"
+              className={`nav-tab ${activeTab === 'suspects' ? 'active' : ''}`}
+              onClick={() => setActiveTab('suspects')}
+            >
+              <span>👤 {t('nav.suspects')}</span>
+              <span className="nav-counter">{suspects.length}</span>
+            </button>
 
-          <button
-            type="button"
-            className={`nav-tab ${activeTab === 'locations' ? 'active' : ''}`}
-            onClick={() => setActiveTab('locations')}
-          >
-            <span>🏛️ Estate & Weapons</span>
-            <span className="nav-counter">{locations.length + weapons.length}</span>
-          </button>
+            <button
+              type="button"
+              className={`nav-tab ${activeTab === 'locations' ? 'active' : ''}`}
+              onClick={() => setActiveTab('locations')}
+            >
+              <span>🏛️ {t('nav.locations')}</span>
+              <span className="nav-counter">{locations.length + weapons.length}</span>
+            </button>
 
-          <button
-            type="button"
-            className={`nav-tab ${activeTab === 'journal' ? 'active' : ''}`}
-            onClick={() => setActiveTab('journal')}
-          >
-            <span>📖 Detective Journal</span>
-            <span className="nav-counter">{progress}%</span>
-          </button>
-        </div>
-      </nav>
+            <button
+              type="button"
+              className={`nav-tab ${activeTab === 'journal' ? 'active' : ''}`}
+              onClick={() => setActiveTab('journal')}
+            >
+              <span>📖 {t('nav.journal')}</span>
+              <span className="nav-counter">{progress}%</span>
+            </button>
+          </div>
+        </nav>
+      )}
 
       {/* Main Workspace Panels */}
       <main className="main-content" style={{ padding: activeTab === 'scene' ? '0.5rem 1rem 2rem' : undefined }}>
@@ -195,12 +250,15 @@ export default function InvestigationPage({
           <PlayableMysteryGame
             caseData={caseData}
             examinedClueIds={examinedClueIds}
-            onToggleExamined={handleToggleExamined}
+            onToggleExamined={handleDiscoverClue}
             onOpenJournal={() => setActiveTab('journal')}
             onOpenBoard={() => setActiveTab('board')}
             onOpenSuspects={() => setActiveTab('suspects')}
             onOpenAccusation={() => handleInitiateAccusation(null)}
             progressPercentage={progress}
+            poiCount={personsOfInterest.size}
+            hasOpenedBoard={activeTab === 'board'}
+            hasOpenedJournal={activeTab === 'journal'}
           />
         )}
 
@@ -213,10 +271,10 @@ export default function InvestigationPage({
                 className="btn-return-scene"
                 onClick={() => setActiveTab('scene')}
               >
-                ◀ Return to Crime Scene Room [Esc]
+                ◀ {t('nav.crimeScene')} [Esc]
               </button>
               <span className="dossier-hint font-mono">
-                PRESS [ESC] OR CLICK TO RETURN TO SPATIAL EXPLORATION
+                {t('inspector.hotkeyTip')}
               </span>
             </div>
 
@@ -226,6 +284,7 @@ export default function InvestigationPage({
                 startingClueId={startingClueId}
                 selectedNodeId={selectedNodeId}
                 onSelectNode={setSelectedNodeId}
+                examinedClueIds={examinedClueIds}
               />
             )}
 
@@ -265,6 +324,7 @@ export default function InvestigationPage({
 
             {activeTab === 'journal' && (
               <InvestigationJournal
+                caseData={caseData}
                 clues={clues}
                 suspects={suspects}
                 examinedClueIds={examinedClueIds}

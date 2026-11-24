@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { submitAccusation } from '../services/caseApi';
 import AccusationResult from './AccusationResult';
+import { useLanguage } from '../localization/LanguageContext';
 
 /**
  * AccusationModal Component
@@ -26,10 +27,12 @@ export default function AccusationModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [submissionResult, setSubmissionResult] = useState(null);
+  const { t, getSuspectText } = useLanguage();
 
   if (!isOpen) return null;
 
   const accusedSuspect = suspects.find((s) => s.id === selectedSuspectId) || suspects[0];
+  const localizedAccused = accusedSuspect ? getSuspectText(accusedSuspect.id) : null;
 
   const handleProceedToConfirm = (e) => {
     e.preventDefault();
@@ -63,7 +66,7 @@ export default function AccusationModal({
         onAccusationSubmitted(record);
       }
     } else {
-      setErrorMessage(apiResult.error || 'Failed to submit accusation to judicial dispatch.');
+      setErrorMessage(apiResult.error || t('feedback.errorDefault'));
       setIsConfirming(false);
     }
 
@@ -107,12 +110,12 @@ export default function AccusationModal({
           /* STAGE 1: SUSPECT SELECTION & STATEMENT */
           <>
             <div className="accusation-header">
-              <span className="badge badge-burgundy">JUDICIAL PROCEEDINGS</span>
+              <span className="badge badge-burgundy">{t('accusation.badge')}</span>
               <h3 id="accusation-dialog-title" className="accusation-title font-title">
-                FILE OFFICIAL ACCUSATION
+                {t('accusation.title')}
               </h3>
               <p style={{ fontSize: '0.82rem', color: '#b9a89c', margin: 0 }}>
-                Designate the individual you deduce is solely culpable under the forensic constraints.
+                {t('accusation.subtitle')}
               </p>
             </div>
 
@@ -128,18 +131,19 @@ export default function AccusationModal({
                   fontSize: '0.82rem'
                 }}
               >
-                <strong>Dispatch Error:</strong> {errorMessage}
+                <strong>{t('feedback.errorTitle')}:</strong> {errorMessage}
               </div>
             )}
 
             <form onSubmit={handleProceedToConfirm} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">
-                  <span>Designate Culprit from Suspect Pool</span>
+                  <span>{t('accusation.selectPrompt')}</span>
                 </label>
-                <div className="suspect-select-list" role="radiogroup" aria-label="Select suspect to accuse">
+                <div className="suspect-select-list" role="radiogroup" aria-label={t('accusation.selectPrompt')}>
                   {suspects.map((suspect) => {
                     const isSelected = selectedSuspectId === suspect.id;
+                    const localizedS = getSuspectText(suspect.id);
                     return (
                       <div
                         key={suspect.id}
@@ -156,13 +160,13 @@ export default function AccusationModal({
                       >
                         <div>
                           <strong style={{ color: isSelected ? '#ff9fb2' : '#f5efe6' }}>
-                            {suspect.name || suspect.id}
+                            {localizedS.name || suspect.name || suspect.id}
                           </strong>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            {suspect.role}
+                            {localizedS.role || suspect.role}
                           </div>
                         </div>
-                        {isSelected && <span style={{ color: '#ff9fb2', fontWeight: 'bold' }}>✓ SELECTED</span>}
+                        {isSelected && <span style={{ color: '#ff9fb2', fontWeight: 'bold' }}>{t('accusation.selectedBadge')}</span>}
                       </div>
                     );
                   })}
@@ -171,11 +175,11 @@ export default function AccusationModal({
 
               <div className="form-group">
                 <label htmlFor="accusation-rationale" className="form-label">
-                  <span>Indictment Rationale (Optional)</span>
+                  <span>{t('accusation.rationaleLabel')}</span>
                 </label>
                 <textarea
                   id="accusation-rationale"
-                  placeholder="Detail the evidence chain linking this suspect to the crime scene..."
+                  placeholder={t('accusation.rationalePlaceholder')}
                   value={rationale}
                   onChange={(e) => setRationale(e.target.value)}
                   className="clue-notes-input"
@@ -185,14 +189,14 @@ export default function AccusationModal({
 
               <div className="modal-actions">
                 <button type="button" className="btn-cancel" onClick={onClose}>
-                  Cancel
+                  {t('accusation.cancelBtn')}
                 </button>
                 <button
                   type="submit"
                   className="btn-confirm-accuse"
                   disabled={!selectedSuspectId}
                 >
-                  Review Accusation →
+                  {t('accusation.reviewBtn')}
                 </button>
               </div>
             </form>
@@ -201,15 +205,15 @@ export default function AccusationModal({
           /* STAGE 2: SOLEMN CONFIRMATION WARNING */
           <>
             <div className="accusation-header">
-              <span className="badge badge-burgundy">CONFIRMATION OF INDICTMENT</span>
+              <span className="badge badge-burgundy">{t('accusation.badge')}</span>
               <h3 id="accusation-dialog-title" className="accusation-title font-title">
-                CONFIRM CHARGES
+                {t('accusation.confirmTitle')}
               </h3>
             </div>
 
             <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
               <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                You are about to submit formal murder charges against:
+                {t('accusation.confirmPrompt')}
               </p>
               <h4
                 className="font-title"
@@ -220,10 +224,10 @@ export default function AccusationModal({
                   textShadow: '0 0 12px rgba(255, 159, 178, 0.3)'
                 }}
               >
-                {accusedSuspect?.name}
+                {localizedAccused?.name || accusedSuspect?.name}
               </h4>
               <p style={{ fontStyle: 'italic', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                Role: {accusedSuspect?.role}
+                {localizedAccused?.role || accusedSuspect?.role}
               </p>
 
               {rationale.trim() && (
@@ -238,7 +242,7 @@ export default function AccusationModal({
                     color: '#c9bfb1'
                   }}
                 >
-                  <strong>Statement of Accusation:</strong>
+                  <strong>{t('accusation.statementRecorded')}</strong>
                   <p style={{ margin: '4px 0 0', fontStyle: 'italic' }}>"{rationale}"</p>
                 </div>
               )}
@@ -251,7 +255,7 @@ export default function AccusationModal({
                 onClick={() => setIsConfirming(false)}
                 disabled={isSubmitting}
               >
-                ← Back
+                {t('accusation.backBtn')}
               </button>
               <button
                 type="button"
@@ -262,10 +266,10 @@ export default function AccusationModal({
                 {isSubmitting ? (
                   <>
                     <span className="loading-spinner" style={{ width: '14px', height: '14px', display: 'inline-block', marginRight: '6px' }} />
-                    Verifying with Scotland Yard...
+                    {t('accusation.verifying')}
                   </>
                 ) : (
-                  'Confirm & Submit to Inspector'
+                  t('accusation.submitBtn')
                 )}
               </button>
             </div>

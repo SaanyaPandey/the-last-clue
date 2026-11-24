@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../localization/LanguageContext';
 
 /**
  * CluePanel Component
@@ -16,6 +17,7 @@ export default function CluePanel({
 }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'unexamined' | 'examined'
   const [selectedClueId, setSelectedClueId] = useState(startingClueId || (clues[0]?.id ?? null));
+  const { t, getClueText } = useLanguage();
 
   const filteredClues = clues.filter((clue) => {
     const isExamined = examinedClueIds.has(clue.id);
@@ -23,8 +25,6 @@ export default function CluePanel({
     if (filter === 'unexamined') return !isExamined;
     return true;
   });
-
-  const selectedClue = clues.find((c) => c.id === selectedClueId) || clues[0];
 
   const categoryIcons = {
     document: '📜',
@@ -38,9 +38,9 @@ export default function CluePanel({
     <div className="panel-container">
       <div className="panel-header-row">
         <div>
-          <h2 className="panel-title font-title">EVIDENCE & CLUES ARCHIVE</h2>
+          <h2 className="panel-title font-title">{t('cluePanel.title')}</h2>
           <p className="panel-subtitle">
-            Forensic artifacts and documentary records retrieved from the crime scene.
+            {t('cluePanel.subtitle')}
           </p>
         </div>
 
@@ -50,21 +50,21 @@ export default function CluePanel({
             className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
             onClick={() => setFilter('all')}
           >
-            All Evidence ({clues.length})
+            {t('cluePanel.filterAll')} ({clues.length})
           </button>
           <button
             type="button"
             className={`filter-btn ${filter === 'unexamined' ? 'active' : ''}`}
             onClick={() => setFilter('unexamined')}
           >
-            Unexamined ({clues.filter((c) => !examinedClueIds.has(c.id)).length})
+            {t('cluePanel.filterUnexamined')} ({clues.filter((c) => !examinedClueIds.has(c.id)).length})
           </button>
           <button
             type="button"
             className={`filter-btn ${filter === 'examined' ? 'active' : ''}`}
             onClick={() => setFilter('examined')}
           >
-            Examined ({examinedClueIds.size})
+            {t('cluePanel.filterExamined')} ({examinedClueIds.size})
           </button>
         </div>
       </div>
@@ -75,6 +75,7 @@ export default function CluePanel({
           const isExamined = examinedClueIds.has(clue.id);
           const icon = categoryIcons[clue.category] || '🔍';
           const relScore = typeof clue.reliability === 'number' ? Math.round(clue.reliability * 5) : 4;
+          const localized = getClueText(clue.id);
 
           return (
             <article
@@ -83,28 +84,28 @@ export default function CluePanel({
               onClick={() => setSelectedClueId(clue.id)}
             >
               {isStarting && (
-                <div className="lead-stamp" title="Starting point of procedural BFS/DFS solvability graph">
-                  ★ INITIAL LEAD
+                <div className="lead-stamp" title={t('cluePanel.initialLead')}>
+                  {t('cluePanel.initialLead')}
                 </div>
               )}
 
               <div className="clue-header-line">
                 <div className="clue-icon" aria-hidden="true">{icon}</div>
                 <div>
-                  <h3 className="clue-title">{clue.name || clue.label || clue.id}</h3>
+                  <h3 className="clue-title">{localized.name || clue.name || clue.label || clue.id}</h3>
                   <span className="badge badge-slate" style={{ marginTop: '3px' }}>
-                    {clue.category ? clue.category.toUpperCase() : 'PHYSICAL'}
+                    {localized.category ? localized.category.toUpperCase() : (clue.category ? clue.category.toUpperCase() : 'PHYSICAL')}
                   </span>
                 </div>
               </div>
 
               <div className="clue-desc font-serif">
-                "{clue.description || 'Forensic examination pending. No descriptive log available.'}"
+                "{localized.description || clue.description || 'Forensic examination pending.'}"
               </div>
 
               <div className="clue-meta-row">
-                <div className="reliability-bar" title={`Reliability: ${Math.round((clue.reliability || 0.8) * 100)}%`}>
-                  <span>Reliability:</span>
+                <div className="reliability-bar" title={`${t('cluePanel.reliability')} ${Math.round((clue.reliability || 0.8) * 100)}%`}>
+                  <span>{t('cluePanel.reliability')}</span>
                   <div className="rel-indicator" aria-hidden="true">
                     {[1, 2, 3, 4, 5].map((dot) => (
                       <span
@@ -116,7 +117,7 @@ export default function CluePanel({
                 </div>
 
                 <span className={`badge ${isExamined ? 'badge-success' : 'badge-slate'}`}>
-                  {isExamined ? '✓ EXAMINED' : 'UNEXAMINED'}
+                  {isExamined ? t('cluePanel.examinedBadge') : t('cluePanel.unexaminedBadge')}
                 </span>
               </div>
 
@@ -132,11 +133,11 @@ export default function CluePanel({
                     marginBottom: '3px'
                   }}
                 >
-                  DETECTIVE'S FIELD OBSERVATION:
+                  {t('cluePanel.observationLabel')}
                 </label>
                 <textarea
                   id={`note-${clue.id}`}
-                  placeholder="Record deduction or hypothesis regarding this clue..."
+                  placeholder={t('cluePanel.notesPlaceholder')}
                   value={clueNotes[clue.id] || ''}
                   onChange={(e) => onUpdateClueNote(clue.id, e.target.value)}
                   onClick={(e) => e.stopPropagation()}
@@ -150,7 +151,7 @@ export default function CluePanel({
                   className={`btn-examine ${isExamined ? 'is-examined' : ''}`}
                   onClick={() => onToggleExamined(clue.id)}
                 >
-                  {isExamined ? 'Mark Unexamined' : 'Mark as Examined'}
+                  {isExamined ? t('cluePanel.markUnexamined') : t('cluePanel.markExamined')}
                 </button>
 
                 {onSelectGraphNode && (
@@ -159,9 +160,9 @@ export default function CluePanel({
                     className="btn-examine"
                     style={{ flex: 'initial' }}
                     onClick={() => onSelectGraphNode(clue.id)}
-                    title="Locate on Evidence Board"
+                    title={t('cluePanel.viewOnBoard')}
                   >
-                    🕸️ View on Board
+                    {t('cluePanel.viewOnBoard')}
                   </button>
                 )}
               </div>
@@ -172,7 +173,7 @@ export default function CluePanel({
 
       {filteredClues.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#7a8699' }}>
-          No clues match the current filter selection.
+          {t('cluePanel.emptyFilter')}
         </div>
       )}
     </div>

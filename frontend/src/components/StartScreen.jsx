@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
+import LanguageSelector from './LanguageSelector';
+import MovementControlSelector from './MovementControlSelector';
+import { useLanguage } from '../localization/LanguageContext';
+import { useControls } from '../context/ControlsContext';
 
 /**
  * StartScreen Component
- * Initial briefing room for setting difficulty, seed, and launching a case.
+ * Initial briefing room for setting difficulty, seed, language preference, and launching a case.
  */
 export default function StartScreen({ onStartInvestigation, loading = false, error = null }) {
   const [difficulty, setDifficulty] = useState('medium');
+  const [selectedTheme, setSelectedTheme] = useState(null); // 'trophy' | 'science' | 'treasure' | 'library' | null
   const [seed, setSeed] = useState('');
   const [showInstructions, setShowInstructions] = useState(false);
+  const { t } = useLanguage();
+  const { controlMode } = useControls();
 
   const handleRandomizeSeed = () => {
     // Generate random 6-digit positive integer seed
@@ -21,7 +28,8 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
 
     onStartInvestigation({
       difficulty,
-      seed: seed.trim() !== '' ? Number(seed.trim()) : undefined
+      seed: seed.trim() !== '' ? Number(seed.trim()) : undefined,
+      theme: selectedTheme || undefined
     });
   };
 
@@ -29,14 +37,21 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
     <div className="start-screen-wrapper">
       <div className="case-file-cover">
         <header className="case-file-header">
-          <h1 className="game-title font-title">THE LAST CLUE</h1>
-          <p className="game-tagline font-serif">"Every secret leaves a trace."</p>
+          {/* Prominent Onboarding Language Selector */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--amber-light)', textTransform: 'uppercase' }}>
+                🌐 {t('language.selectLanguage')}
+              </span>
+              <LanguageSelector variant="segmented" />
+            </div>
+          </div>
 
-          <div className="case-briefing">
-            Midnight at Blackwood Manor. A wealthy benefactor lies dead under suspicious circumstances.
-            Forensic traces are scattered across the estate, and every suspect harbors a hidden agenda.
-            As Scotland Yard’s lead investigator, explore the interconnected web of evidence, inspect forensic
-            clues, interrogate suspect profiles, and identify the single true culprit.
+          <h1 className="game-title font-title">{t('app.title')}</h1>
+          <p className="game-tagline font-serif">{t('app.tagline')}</p>
+
+          <div className="case-briefing font-serif">
+            {t('startScreen.briefing')}
           </div>
         </header>
 
@@ -53,7 +68,7 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
               marginBottom: '1rem'
             }}
           >
-            <strong>Investigation Dispatch Error:</strong> {error}
+            <strong>{t('feedback.errorTitle')}:</strong> {error}
           </div>
         )}
 
@@ -61,7 +76,7 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
           {/* Difficulty Selection */}
           <div className="form-group">
             <label className="form-label">
-              <span>Select Case Complexity</span>
+              <span>{t('startScreen.selectComplexity')}</span>
               <span className="badge badge-amber">{difficulty.toUpperCase()}</span>
             </label>
             <div className="difficulty-selector" role="radiogroup" aria-label="Difficulty level">
@@ -73,8 +88,8 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
                 onClick={() => setDifficulty('easy')}
                 disabled={loading}
               >
-                <span className="diff-title">EASY</span>
-                <span className="diff-specs">3 Suspects • 3 Clues • 1 Red Herring</span>
+                <span className="diff-title">{t('tiers.easy.badge')}</span>
+                <span className="diff-specs">{t('tiers.easy.title')}</span>
               </button>
 
               <button
@@ -85,8 +100,8 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
                 onClick={() => setDifficulty('medium')}
                 disabled={loading}
               >
-                <span className="diff-title">MEDIUM</span>
-                <span className="diff-specs">4 Suspects • 4 Clues • 2 Red Herrings</span>
+                <span className="diff-title">{t('tiers.medium.badge')}</span>
+                <span className="diff-specs">{t('tiers.medium.title')}</span>
               </button>
 
               <button
@@ -97,18 +112,78 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
                 onClick={() => setDifficulty('hard')}
                 disabled={loading}
               >
-                <span className="diff-title">HARD</span>
-                <span className="diff-specs">5 Suspects • 6 Clues • 3 Red Herrings</span>
+                <span className="diff-title">{t('tiers.hard.badge')}</span>
+                <span className="diff-specs">{t('tiers.hard.title')}</span>
               </button>
             </div>
+          </div>
+
+          {/* Mystery Theme Selector */}
+          <div className="form-group">
+            <label className="form-label">
+              <span>{t('caseThemes.selectThemeLabel') || 'Case Theme / Adventure'}</span>
+              <span className="badge badge-amber font-mono">
+                {selectedTheme ? selectedTheme.toUpperCase() : 'SURPRISE / RANDOM'}
+              </span>
+            </label>
+            <div className="case-theme-grid" role="radiogroup" aria-label="Case adventure theme">
+              <button
+                type="button"
+                className={`theme-pick-btn ${selectedTheme === 'trophy' ? 'active' : ''}`}
+                onClick={() => setSelectedTheme(selectedTheme === 'trophy' ? null : 'trophy')}
+                disabled={loading}
+              >
+                <span className="theme-pick-icon">🏆</span>
+                <span className="theme-pick-title">{t('caseThemes.trophy.title')}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`theme-pick-btn ${selectedTheme === 'science' ? 'active' : ''}`}
+                onClick={() => setSelectedTheme(selectedTheme === 'science' ? null : 'science')}
+                disabled={loading}
+              >
+                <span className="theme-pick-icon">🔬</span>
+                <span className="theme-pick-title">{t('caseThemes.science.title')}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`theme-pick-btn ${selectedTheme === 'treasure' ? 'active' : ''}`}
+                onClick={() => setSelectedTheme(selectedTheme === 'treasure' ? null : 'treasure')}
+                disabled={loading}
+              >
+                <span className="theme-pick-icon">🗝️</span>
+                <span className="theme-pick-title">{t('caseThemes.treasure.title')}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`theme-pick-btn ${selectedTheme === 'library' ? 'active' : ''}`}
+                onClick={() => setSelectedTheme(selectedTheme === 'library' ? null : 'library')}
+                disabled={loading}
+              >
+                <span className="theme-pick-icon">📚</span>
+                <span className="theme-pick-title">{t('caseThemes.library.title')}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Movement Controls Preference */}
+          <div className="form-group">
+            <label className="form-label">
+              <span>{t('controls.settingLabel')}</span>
+              <span className="badge badge-amber">{t(`controls.${controlMode}.badge`)}</span>
+            </label>
+            <MovementControlSelector variant="segmented" />
           </div>
 
           {/* Seed Input */}
           <div className="form-group">
             <label htmlFor="seed-input" className="form-label">
-              <span>Investigation Seed (Optional)</span>
+              <span>{t('startScreen.seedLabel')}</span>
               <span style={{ fontSize: '0.72rem', color: '#7a8699', textTransform: 'none' }}>
-                Leave blank for cryptographically random case
+                {t('startScreen.seedHint')}
               </span>
             </label>
             <div className="seed-input-row">
@@ -118,7 +193,7 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
                 min="0"
                 max="2147483647"
                 step="1"
-                placeholder="e.g. 12345 (Leave empty for random seed)"
+                placeholder={t('startScreen.seedPlaceholder')}
                 value={seed}
                 onChange={(e) => setSeed(e.target.value)}
                 className="seed-input"
@@ -129,9 +204,9 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
                 className="seed-random-btn"
                 onClick={handleRandomizeSeed}
                 disabled={loading}
-                title="Generate random seed"
+                title="Random Code"
               >
-                🎲 Randomize
+                {t('startScreen.randomizeBtn')}
               </button>
               {seed && (
                 <button
@@ -139,9 +214,9 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
                   className="seed-random-btn"
                   onClick={() => setSeed('')}
                   disabled={loading}
-                  title="Clear seed"
+                  title="Clear"
                 >
-                  Clear
+                  {t('startScreen.clearBtn')}
                 </button>
               )}
             </div>
@@ -158,11 +233,11 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
               {loading ? (
                 <>
                   <span className="loading-spinner" style={{ width: '18px', height: '18px' }} />
-                  <span>Unsealing Case File...</span>
+                  <span>{t('startScreen.loadingBtn')}</span>
                 </>
               ) : (
                 <>
-                  <span>🔎 Open Case File & Begin Investigation</span>
+                  <span>{t('startScreen.startBtn')}</span>
                 </>
               )}
             </button>
@@ -177,36 +252,18 @@ export default function StartScreen({ onStartInvestigation, loading = false, err
             onClick={() => setShowInstructions(!showInstructions)}
             aria-expanded={showInstructions}
           >
-            <span>DETECTIVE'S FIELD MANUAL</span>
-            <span>{showInstructions ? '▲ Hide' : '▼ View Instructions'}</span>
+            <span>{t('startScreen.fieldManualToggle')}</span>
+            <span>{showInstructions ? t('startScreen.hideManual') : t('startScreen.viewManual')}</span>
           </button>
 
           {showInstructions && (
             <div className="instructions-body">
-              <div className="instruction-step">
-                <span className="step-num">1</span>
-                <div>
-                  <strong>Examine Starting Clue:</strong> Every mystery originates from an initial forensic lead returned by the generator.
+              {t('startScreen.steps').map((step, idx) => (
+                <div key={idx} className="instruction-step">
+                  <span className="step-num">{idx + 1}</span>
+                  <div>{step}</div>
                 </div>
-              </div>
-              <div className="instruction-step">
-                <span className="step-num">2</span>
-                <div>
-                  <strong>Traverse Evidence Board:</strong> Inspect the procedural evidence graph to uncover connecting relationships.
-                </div>
-              </div>
-              <div className="instruction-step">
-                <span className="step-num">3</span>
-                <div>
-                  <strong>Cross-Examine Suspects:</strong> Review access locations, trait markers, and flag Persons of Interest.
-                </div>
-              </div>
-              <div className="instruction-step">
-                <span className="step-num">4</span>
-                <div>
-                  <strong>Maintain Your Journal:</strong> Take personal notes and monitor your true investigation progress.
-                </div>
-              </div>
+              ))}
             </div>
           )}
         </section>

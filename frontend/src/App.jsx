@@ -6,35 +6,40 @@ import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
 import ErrorBoundary from './components/ErrorBoundary';
 import DetectiveCursor from './components/DetectiveCursor';
+import { LanguageProvider, useLanguage } from './localization/LanguageContext';
+import { ControlsProvider } from './context/ControlsContext';
 import './styles/global.css';
 import './styles/game.css';
 
 /**
- * Main Application Shell
- * Controls top-level navigation between the Case File Archive (HomePage),
- * procedural generation (LoadingState), and Active Investigation (InvestigationPage).
+ * Inner Application Shell
+ * Has access to LanguageContext.
  */
-function App() {
+function MainApp() {
+  const { t } = useLanguage();
   const [activeCase, setActiveCase] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [lastParams, setLastParams] = useState({ difficulty: 'medium' });
 
   // Handles requesting a new mystery case from backend API
-  const handleStartInvestigation = async ({ difficulty = 'medium', seed } = {}) => {
+  const handleStartInvestigation = async ({ difficulty = 'medium', seed, theme } = {}) => {
     if (isGenerating) return;
 
     setIsGenerating(true);
     setErrorMessage(null);
-    setLastParams({ difficulty, seed });
+    setLastParams({ difficulty, seed, theme });
 
-    const result = await generateMysteryCase({ difficulty, seed });
+    const result = await generateMysteryCase({ difficulty, seed, theme });
 
     if (result.success && result.data) {
-      setActiveCase(result.data);
+      setActiveCase({
+        ...result.data,
+        theme: theme || result.data.theme
+      });
       setErrorMessage(null);
     } else {
-      setErrorMessage(result.error || 'Failed to generate mystery case.');
+      setErrorMessage(result.error || t('feedback.errorDefault'));
       setActiveCase(null);
     }
 
@@ -52,14 +57,13 @@ function App() {
     setErrorMessage(null);
   };
 
-  // Render appropriate view
   return (
     <div className="app-root">
       <DetectiveCursor />
       <ErrorBoundary onReset={handleReturnToMenu}>
         {isGenerating ? (
           <div className="main-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-            <LoadingState message="Formulating crime scene graph, generating forensic leads, and verifying unique solvability..." />
+            <LoadingState />
           </div>
         ) : errorMessage && !activeCase ? (
           <div className="main-content">
@@ -87,4 +91,18 @@ function App() {
   );
 }
 
-export default App;
+/**
+ * Root Application Component
+ * Encloses the entire application tree inside LanguageProvider.
+ */
+export default function App() {
+  return (
+    <LanguageProvider>
+      <ControlsProvider>
+        <MainApp />
+      </ControlsProvider>
+    </LanguageProvider>
+
+
+  );
+}

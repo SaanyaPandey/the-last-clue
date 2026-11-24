@@ -1,9 +1,12 @@
 import React from 'react';
+import LanguageSelector from './LanguageSelector';
+import MovementControlSelector from './MovementControlSelector';
+import { useLanguage } from '../localization/LanguageContext';
 
 /**
  * CaseHeader Component
  * Sticky top-bar displaying case metadata, real-time investigation progress,
- * and quick actions (New Case, Return to Menu, Accusation).
+ * language switcher, and quick actions (New Case, Return to Menu, Accusation).
  */
 export default function CaseHeader({
   caseData,
@@ -12,6 +15,7 @@ export default function CaseHeader({
   onReturnToMenu,
   onOpenAccusation
 }) {
+  const { t } = useLanguage();
   if (!caseData) return null;
 
   const { caseId, difficulty, seed } = caseData;
@@ -22,28 +26,34 @@ export default function CaseHeader({
     hard: 'badge-burgundy'
   };
 
+  const difficultyLabels = {
+    easy: t('tiers.easy.badge'),
+    medium: t('tiers.medium.badge'),
+    hard: t('tiers.hard.badge')
+  };
+
   return (
     <header className="case-header">
       <div className="case-header-inner">
         <div className="brand-section">
-          <h1 className="brand-title font-title" onClick={onReturnToMenu} title="Return to Menu">
-            THE LAST CLUE
+          <h1 className="brand-title font-title" onClick={onReturnToMenu} title={t('header.archiveTitle')}>
+            {t('app.title')}
           </h1>
           <div className="case-meta-group">
             <span className="badge badge-slate" title="Unique Case Identifier">
-              {caseId || 'CASE-ACTIVE'}
+              {caseId || t('header.caseActive')}
             </span>
             <span className={`badge ${difficultyColors[difficulty] || 'badge-amber'}`}>
-              {difficulty ? difficulty.toUpperCase() : 'STANDARD'}
+              {difficultyLabels[difficulty] || (difficulty ? difficulty.toUpperCase() : 'STANDARD')}
             </span>
-            <span className="badge badge-slate" title="Mulberry32 PRNG Seed">
-              SEED: {seed}
+            <span className="badge badge-slate" title="PRNG Seed">
+              {t('header.seed')}: {seed}
             </span>
           </div>
         </div>
 
-        <div className="progress-widget" title="Derived from examined clues, POIs, and notes">
-          <span className="progress-label">Progress</span>
+        <div className="progress-widget" title={t('journal.hypothesisDesc')}>
+          <span className="progress-label">{t('header.progress')}</span>
           <div className="progress-bar-track" role="progressbar" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100">
             <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
           </div>
@@ -51,29 +61,35 @@ export default function CaseHeader({
         </div>
 
         <div className="header-actions">
+          {/* In-game Language Switcher */}
+          <LanguageSelector variant="compact" />
+
+          {/* Movement Controls Switcher */}
+          <MovementControlSelector variant="compact" />
+
           <button
             type="button"
             className="btn-header"
             onClick={onNewCase}
-            title="Generate a new procedural mystery"
+            title={t('header.newCaseTitle')}
           >
-            New Case
+            {t('header.newCase')}
           </button>
           <button
             type="button"
             className="btn-header"
             onClick={onReturnToMenu}
-            title="Return to Case Files Archive"
+            title={t('header.archiveTitle')}
           >
-            Archive
+            {t('header.archive')}
           </button>
           <button
             type="button"
             className="btn-header btn-accuse"
             onClick={onOpenAccusation}
-            title="File an official accusation"
+            title={t('header.fileAccusationTitle')}
           >
-            File Accusation
+            {t('header.fileAccusation')}
           </button>
         </div>
       </div>

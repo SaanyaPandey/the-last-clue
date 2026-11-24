@@ -1,18 +1,32 @@
 import React, { useState } from 'react';
 import StartScreen from './StartScreen';
+import LanguageSelector from './LanguageSelector';
+import DetectiveWorldCanvas from './DetectiveWorldCanvas';
+import { useLanguage } from '../localization/LanguageContext';
+import { soundEngine } from '../game/SoundEngine';
 
 /**
  * LandingPage Component
- * Premium cinematic noir entrance featuring:
- * 1. Classified Scotland Yard top navigation
- * 2. Dramatic hero section ("EVERY CLUE LEAVES A TRACE.")
- * 3. 3-Step "How to Play" field methodology
- * 4. Case Experience & Evidence Board preview
- * 5. Direct launch into live procedural case generation
- * 6. Atmospheric detective footer
+ * Completely redesigned narrative detective adventure entrance.
+ * Features:
+ * 1. Living Animated Detective World on the right:
+ *    - Victorian old-town street & manor exterior at night
+ *    - Human-like detective walking with natural gait, fedora, and glowing lantern
+ *    - Silhouettes moving behind warm glowing arched windows
+ *    - Flickering gas streetlamp with volumetric light cone
+ *    - Drifting fog ribbons, raindrops, and wet cobblestone puddle reflections
+ *    - Interactive magnifying glass that reveals a hidden clue on hover
+ * 2. Dramatic narrative headline & typography on the left:
+ *    - "EVERY CLUE LEAVES A TRACE."
+ *    - "Har raaz ke peeche ek kahani hai. Kya tum sach tak pahunch sakte ho?"
+ *    - Prominent tactile "Start Investigating" button and "Discover the Mystery" link
+ * 3. Scotland Yard Field Notebook & Live Case Dispatch Console
+ * 4. Rich handcrafted palette: deep burgundy, dark walnut, antique brass, and aged parchment
  */
 export default function LandingPage({ onStartInvestigation, loading = false, error = null }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [secretClueDiscovered, setSecretClueDiscovered] = useState(false);
+  const { t } = useLanguage();
 
   const scrollToSection = (id) => {
     setMobileMenuOpen(false);
@@ -22,52 +36,67 @@ export default function LandingPage({ onStartInvestigation, loading = false, err
     }
   };
 
+  const handleQuickStart = () => {
+    soundEngine.playInspect();
+    onStartInvestigation({ difficulty: 'medium' });
+  };
+
+  const handleClueDiscovered = () => {
+    setSecretClueDiscovered(true);
+  };
+
   return (
-    <div className="noir-landing">
-      {/* 1. TOP NAVIGATION */}
-      <header className="noir-nav-header">
-        <div className="noir-nav-container">
-          <div className="noir-logo-group" onClick={() => scrollToSection('hero')}>
-            <span className="noir-logo-stamp">CLASSIFIED</span>
-            <span className="noir-logo-title font-title">THE LAST CLUE</span>
+    <div className="adventure-landing">
+      {/* 1. TOP VICTORIAN NAVIGATION */}
+      <header className="adventure-nav-header">
+        <div className="adventure-nav-container">
+          <div className="adventure-logo-group" onClick={() => scrollToSection('hero')}>
+            <span className="scotland-yard-seal font-mono">SCOTLAND YARD • CASE 4092-B</span>
+            <span className="adventure-logo-title font-title">{t('app.title')}</span>
           </div>
 
-          {/* Desktop Nav Links */}
-          <nav className="noir-nav-links" aria-label="Main Navigation">
+          {/* Desktop Nav Controls */}
+          <nav className="adventure-nav-links" aria-label="Main Navigation">
             <button
               type="button"
-              className="noir-nav-link"
-              onClick={() => scrollToSection('how-to-play')}
+              className="adventure-nav-link"
+              onClick={() => scrollToSection('casebook')}
             >
-              How to Play
+              {t('nav.howToPlay')}
             </button>
             <button
               type="button"
-              className="noir-nav-link"
+              className="adventure-nav-link"
               onClick={() => scrollToSection('experience')}
             >
-              The Experience
+              {t('nav.experience')}
             </button>
             <button
               type="button"
-              className="noir-nav-link"
-              onClick={() => scrollToSection('rules')}
+              className="adventure-nav-link"
+              onClick={() => scrollToSection('case-dispatch')}
             >
-              Methodology
+              {t('nav.methodology')}
             </button>
+
+            {/* Language Switcher */}
+            <LanguageSelector variant="compact" />
+
+            {/* Direct Header Action */}
             <button
               type="button"
-              className="noir-nav-cta"
-              onClick={() => scrollToSection('case-launch')}
+              className="adventure-nav-cta font-mono"
+              onClick={handleQuickStart}
+              disabled={loading}
             >
-              Begin Case →
+              {t('hero.startInvestigating') || t('hero.beginBtn')}
             </button>
           </nav>
 
-          {/* Mobile Menu Toggle Button */}
+          {/* Mobile Menu Button */}
           <button
             type="button"
-            className="noir-mobile-toggle"
+            className="adventure-mobile-toggle"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
             aria-label="Toggle Navigation Menu"
@@ -76,279 +105,269 @@ export default function LandingPage({ onStartInvestigation, loading = false, err
           </button>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Mobile Dropdown */}
         {mobileMenuOpen && (
-          <div className="noir-mobile-dropdown">
+          <div className="adventure-mobile-dropdown animate-fade-in">
+            <div style={{ padding: '0.6rem 0.8rem', borderBottom: '1px solid rgba(212,163,89,0.15)' }}>
+              <LanguageSelector variant="segmented" />
+            </div>
             <button
               type="button"
-              className="noir-mobile-link"
-              onClick={() => scrollToSection('how-to-play')}
+              className="adventure-mobile-link"
+              onClick={() => scrollToSection('casebook')}
             >
-              How to Play
+              {t('nav.howToPlay')}
             </button>
             <button
               type="button"
-              className="noir-mobile-link"
+              className="adventure-mobile-link"
               onClick={() => scrollToSection('experience')}
             >
-              The Experience
+              {t('nav.experience')}
             </button>
             <button
               type="button"
-              className="noir-mobile-link"
-              onClick={() => scrollToSection('rules')}
+              className="adventure-mobile-link"
+              onClick={() => scrollToSection('case-dispatch')}
             >
-              Methodology
+              {t('nav.methodology')}
             </button>
             <button
               type="button"
-              className="noir-nav-cta"
-              style={{ width: '100%', textAlign: 'center', marginTop: '0.5rem' }}
-              onClick={() => scrollToSection('case-launch')}
+              className="adventure-nav-cta font-mono"
+              style={{ width: '100%', textAlign: 'center', margin: '0.8rem 0 0.4rem' }}
+              onClick={handleQuickStart}
+              disabled={loading}
             >
-              Begin Case →
+              {t('hero.startInvestigating') || t('hero.beginBtn')}
             </button>
           </div>
         )}
       </header>
 
-      {/* 2. CINEMATIC HERO SECTION */}
-      <section id="hero" className="noir-hero-section">
-        <div className="noir-hero-spotlight" aria-hidden="true" />
-        <div className="noir-hero-content">
-          <div className="noir-hero-meta">
-            <span className="badge badge-burgundy">CASE FILE #4092-B</span>
-            <span className="badge badge-slate">SCOTLAND YARD ARCHIVE</span>
-            <span className="badge badge-amber">100% PROCEDURAL DSA</span>
+      {/* 2. SPLIT-SCREEN ANIMATED DETECTIVE HERO */}
+      <section id="hero" className="adventure-hero-section">
+        {/* Subtle Ambient Fog & Vignette Overlays */}
+        <div className="adventure-hero-vignette" aria-hidden="true" />
+        <div className="adventure-ambient-glow" aria-hidden="true" />
+
+        <div className="adventure-hero-split-layout">
+          {/* LEFT COLUMN: Narrative Typography & Actions */}
+          <div className="adventure-hero-left">
+            <div className="hero-case-stamp font-mono">
+              <span className="case-stamp-bullet" aria-hidden="true">✦</span>
+              <span>{t('hero.caseBadge')}</span>
+              <span className="case-badge-active">ACTIVE INQUIRY</span>
+            </div>
+
+            <h1 className="noir-hero-headline hero-adventure-title font-title">
+              {t('hero.headline')}
+            </h1>
+
+            <p className="hero-narrative-tagline font-serif">
+              "{t('hero.supportingStory')}"
+            </p>
+
+            <p className="hero-narrative-desc font-serif">
+              {t('hero.subhead')}
+            </p>
+
+            {/* Primary & Secondary Call to Actions */}
+            <div className="hero-action-cluster">
+              <button
+                type="button"
+                className="btn-adventure-primary"
+                onClick={handleQuickStart}
+                disabled={loading}
+              >
+                <span className="btn-icon" aria-hidden="true">🔎</span>
+                <span className="btn-text font-mono">
+                  {loading ? t('startScreen.loadingBtn') : (t('hero.startInvestigating') || t('hero.beginBtn'))}
+                </span>
+                <span className="btn-shine-bar" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                className="btn-adventure-secondary font-mono"
+                onClick={() => scrollToSection('case-dispatch')}
+              >
+                <span>{t('hero.discoverMystery') || t('hero.methodologyBtn')}</span>
+              </button>
+            </div>
+
+            {/* Secret Evidence Badge / Interactive Scene Feedback */}
+            <div className="hero-clue-status-strip font-mono" role="status">
+              <div className="clue-status-pill">
+                <span className="status-dot-active" aria-hidden="true" />
+                <span>
+                  {secretClueDiscovered
+                    ? t('hero.secretClueFound')
+                    : '1 Hidden Evidence on the street — hover right with magnifying glass'}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Detective Highlights */}
+            <div className="hero-features-ribbon">
+              <div className="feature-pill">
+                <span className="pill-icon" aria-hidden="true">🏛️</span>
+                <span className="pill-text font-serif">Thematic Victorian Estates</span>
+              </div>
+              <div className="feature-pill">
+                <span className="pill-icon" aria-hidden="true">🕸️</span>
+                <span className="pill-text font-serif">Evidence Pinboard & Graph</span>
+              </div>
+              <div className="feature-pill">
+                <span className="pill-icon" aria-hidden="true">⚖️</span>
+                <span className="pill-text font-serif">100% Solvable Deductive Puzzles</span>
+              </div>
+            </div>
           </div>
 
-          <h1 className="noir-hero-headline font-title">
-            EVERY CLUE LEAVES A TRACE.
-          </h1>
+          {/* RIGHT COLUMN: The Living Animated Detective World */}
+          <div className="adventure-hero-right">
+            <div className="adventure-frame-wrapper">
+              <div className="frame-corner top-left" aria-hidden="true" />
+              <div className="frame-corner top-right" aria-hidden="true" />
+              <div className="frame-corner bottom-left" aria-hidden="true" />
+              <div className="frame-corner bottom-right" aria-hidden="true" />
 
-          <p className="noir-hero-subhead">
-            Midnight at Blackwood Manor. A wealthy benefactor lies dead under suspicious circumstances.
-            Forensic traces are scattered across the estate, and every suspect harbors a secret.
-            Examine physical evidence, reconstruct the graph of interconnected relationships,
-            and expose the single true culprit through pure deductive reasoning.
-          </p>
-
-          <div className="noir-hero-actions">
-            <button
-              type="button"
-              className="noir-btn-primary"
-              onClick={() => scrollToSection('case-launch')}
-            >
-              <span>🔎 BEGIN INVESTIGATION</span>
-            </button>
-            <button
-              type="button"
-              className="noir-btn-secondary"
-              onClick={() => scrollToSection('how-to-play')}
-            >
-              <span>FIELD METHODOLOGY</span>
-            </button>
-          </div>
-
-          {/* Engine Highlights */}
-          <div className="noir-hero-specs">
-            <div className="spec-card">
-              <span className="spec-val font-mono">CSP ENGINE</span>
-              <span className="spec-desc">Constraint satisfaction solver guarantees plausible criminal alibis</span>
-            </div>
-            <div className="spec-card">
-              <span className="spec-val font-mono">BFS / DFS</span>
-              <span className="spec-desc">Algorithmic traversal validates evidence path reachability</span>
-            </div>
-            <div className="spec-card">
-              <span className="spec-val font-mono">ZERO AI / LLMs</span>
-              <span className="spec-desc">Deterministic Mulberry32 PRNG ensures 100% reproducible mysteries</span>
+              <DetectiveWorldCanvas
+                onDiscoverClue={handleClueDiscovered}
+                discoveredCount={secretClueDiscovered ? 1 : 0}
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. HOW TO PLAY SECTION */}
-      <section id="how-to-play" className="noir-section">
+      {/* 3. SCOTLAND YARD FIELD CASEBOOK (How To Play) */}
+      <section id="casebook" className="casebook-section">
         <div className="section-header-block">
-          <span className="badge badge-amber">INVESTIGATIVE PROTOCOL</span>
-          <h2 className="section-title font-title">THREE STEPS TO SOLVING THE CRIME</h2>
-          <p className="section-subtext">
-            Standard police methodology for analyzing procedurally generated crime scenes.
+          <span className="badge badge-amber font-mono">{t('howToPlay.protocolBadge')}</span>
+          <h2 className="section-title font-title">{t('howToPlay.title')}</h2>
+          <p className="section-subtext font-serif">
+            {t('howToPlay.subtitle')}
           </p>
         </div>
 
-        <div className="methodology-grid">
-          <div className="methodology-card">
-            <div className="methodology-num font-mono">01</div>
-            <h3 className="methodology-heading font-title">Examine the Clues</h3>
-            <p className="methodology-text">
-              Inspect physical artifacts, torn blackmail letters, chemical goblets, and chronological timestamps.
-              Every generated mystery begins from a verified initial lead connected to the crime scene.
+        <div className="casebook-notebook">
+          <div className="casebook-dossier-card">
+            <div className="casebook-card-header font-mono">
+              <span className="step-num">01</span>
+              <span className="step-tag">{t('howToPlay.step1.tag')}</span>
+            </div>
+            <h3 className="casebook-title font-title">{t('howToPlay.step1.title')}</h3>
+            <p className="casebook-text font-serif">
+              {t('howToPlay.step1.desc')}
             </p>
-            <div className="methodology-tag">FORENSIC ARTIFACTS</div>
           </div>
 
-          <div className="methodology-card">
-            <div className="methodology-num font-mono">02</div>
-            <h3 className="methodology-heading font-title">Connect the Evidence</h3>
-            <p className="methodology-text">
-              Traverse the interactive Evidence Board. Examine how suspects link to accessible rooms,
-              affiliated implements, and circumstantial motives. Discard plausible red herrings.
+          <div className="casebook-dossier-card">
+            <div className="casebook-card-header font-mono">
+              <span className="step-num">02</span>
+              <span className="step-tag">{t('howToPlay.step2.tag')}</span>
+            </div>
+            <h3 className="casebook-title font-title">{t('howToPlay.step2.title')}</h3>
+            <p className="casebook-text font-serif">
+              {t('howToPlay.step2.desc')}
             </p>
-            <div className="methodology-tag">GRAPH REASONING</div>
           </div>
 
-          <div className="methodology-card">
-            <div className="methodology-num font-mono">03</div>
-            <h3 className="methodology-heading font-title">Identify the Culprit</h3>
-            <p className="methodology-text">
-              Formulate your indictment with an official detective statement. Submit your charge to
-              Scotland Yard for authoritative server-side verdict verification.
+          <div className="casebook-dossier-card">
+            <div className="casebook-card-header font-mono">
+              <span className="step-num">03</span>
+              <span className="step-tag">{t('howToPlay.step3.tag')}</span>
+            </div>
+            <h3 className="casebook-title font-title">{t('howToPlay.step3.title')}</h3>
+            <p className="casebook-text font-serif">
+              {t('howToPlay.step3.desc')}
             </p>
-            <div className="methodology-tag">JUDICIAL VERDICT</div>
           </div>
         </div>
       </section>
 
-      {/* 4. CASE EXPERIENCE & PREVIEW */}
-      <section id="experience" className="noir-section noir-preview-section">
+      {/* 4. CASE EXPERIENCE & EVIDENCE BOARD SHOWCASE */}
+      <section id="experience" className="experience-showcase-section">
         <div className="section-header-block">
-          <span className="badge badge-teal">SYSTEM OVERVIEW</span>
-          <h2 className="section-title font-title">THE DETECTIVE'S WORKSPACE</h2>
-          <p className="section-subtext">
-            A cohesive suite of investigation tools built directly on mathematical graph algorithms.
+          <span className="badge badge-burgundy font-mono">{t('preview.systemBadge')}</span>
+          <h2 className="section-title font-title">{t('preview.title')}</h2>
+          <p className="section-subtext font-serif">
+            {t('preview.subtitle')}
           </p>
         </div>
 
-        <div className="preview-display">
-          <div className="preview-terminal-header">
-            <div className="terminal-dots">
-              <span className="dot red" />
-              <span className="dot yellow" />
-              <span className="dot green" />
+        <div className="experience-dual-grid">
+          {/* Evidence Pinboard Card */}
+          <div className="experience-feature-card">
+            <div className="feature-card-header">
+              <span className="feature-icon" aria-hidden="true">🕸️</span>
+              <div>
+                <span className="feature-badge font-mono">{t('nav.evidenceBoard')}</span>
+                <h3 className="feature-title font-title">{t('preview.boardTitle')}</h3>
+              </div>
             </div>
-            <span className="terminal-title font-mono">THE_LAST_CLUE // EVIDENCE_BOARD_MODULE</span>
-            <span className="badge badge-slate" style={{ fontSize: '0.65rem' }}>SYSTEM: ACTIVE</span>
+            <p className="feature-desc font-serif">{t('preview.boardDesc')}</p>
+            <ul className="feature-bullet-list font-sans">
+              {t('preview.featuresList').map((item, idx) => (
+                <li key={idx}>✦ {item}</li>
+              ))}
+            </ul>
           </div>
 
-          <div className="preview-terminal-body">
-            <div className="preview-panel">
-              <span className="preview-badge">PROCEDURAL ADJACENCY GRAPH</span>
-              <h4 className="font-title" style={{ color: 'var(--amber-light)', fontSize: '1.1rem', margin: '0.4rem 0' }}>
-                Relational Evidence Network
-              </h4>
-              <p style={{ fontSize: '0.85rem', color: '#a69f93', lineHeight: 1.6 }}>
-                Every case builds a genuine Adjacency-List graph connecting suspects, Manor rooms,
-                murder weapons, and forensic traces. Inspect incoming and outgoing links directly
-                on the board or through the accessible Connection Index.
-              </p>
-              <ul className="preview-feature-list">
-                <li>✦ <strong>Multi-layered Nodes:</strong> Distinct color tokens for suspects, clues, rooms, and weapons</li>
-                <li>✦ <strong>Directed & Undirected Relations:</strong> Points-to, found-at, affiliated-with, motivated-by</li>
-                <li>✦ <strong>Dynamic Inspector:</strong> Highlight incident edges and neighbor subgraphs on demand</li>
-              </ul>
+          {/* Suspects & Diary Card */}
+          <div className="experience-feature-card">
+            <div className="feature-card-header">
+              <span className="feature-icon" aria-hidden="true">📖</span>
+              <div>
+                <span className="feature-badge font-mono">{t('nav.suspects')} & {t('nav.journal')}</span>
+                <h3 className="feature-title font-title">{t('preview.journalTitle')}</h3>
+              </div>
             </div>
-
-            <div className="preview-panel">
-              <span className="preview-badge" style={{ borderColor: 'var(--burgundy-light)', color: '#f78da7' }}>
-                INTELLIGENCE REGISTRY
-              </span>
-              <h4 className="font-title" style={{ color: '#ff9fb2', fontSize: '1.1rem', margin: '0.4rem 0' }}>
-                Suspect Profiles & Journal
-              </h4>
-              <p style={{ fontSize: '0.85rem', color: '#a69f93', lineHeight: 1.6 }}>
-                Review behavioral traits, access histories, and motive theories. Flag Persons of Interest (POIs)
-                and track honest investigation progress based on examined leads and field observations.
-              </p>
-              <ul className="preview-feature-list">
-                <li>✦ <strong>Person of Interest (POI) Flags:</strong> Direct suspect tracking without marking guilt</li>
-                <li>✦ <strong>Deductions Journal:</strong> Working hypothesis notepad and recorded field log</li>
-                <li>✦ <strong>Sealed Solution Privacy:</strong> Authoritative server validation with zero client leaks</li>
-              </ul>
-            </div>
+            <p className="feature-desc font-serif">{t('preview.journalDesc')}</p>
+            <ul className="feature-bullet-list font-sans">
+              {t('preview.journalFeaturesList').map((item, idx) => (
+                <li key={idx}>✦ {item}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
-      {/* 5. METHODOLOGY & RULES */}
-      <section id="rules" className="noir-section">
+      {/* 5. ACTIVE CASE DISPATCH & LAUNCH TERMINAL */}
+      <section id="case-dispatch" className="dispatch-terminal-section">
         <div className="section-header-block">
-          <span className="badge badge-burgundy">FORENSIC RIGOR</span>
-          <h2 className="section-title font-title">CONSTRAINT & COMPLEXITY TIERS</h2>
-          <p className="section-subtext">
-            How procedural parameters scale the investigative difficulty.
+          <span className="badge badge-amber font-mono">{t('startScreen.dispatchBadge')}</span>
+          <h2 className="section-title font-title">{t('startScreen.title')}</h2>
+          <p className="section-subtext font-serif">
+            {t('startScreen.subtitle')}
           </p>
         </div>
 
-        <div className="complexity-grid">
-          <div className="complexity-card">
-            <div className="complexity-badge">EASY DOSSIER</div>
-            <h3 className="font-title" style={{ fontSize: '1.2rem', color: '#72cbcf' }}>3 Suspects • 3 Clues</h3>
-            <p style={{ fontSize: '0.85rem', color: '#aba191' }}>
-              A concise murder inquiry with 1 red herring. Ideal for familiarizing yourself with forensic
-              clue examination and direct evidence chains.
-            </p>
-          </div>
-
-          <div className="complexity-card featured">
-            <div className="complexity-badge" style={{ color: 'var(--amber-light)', borderColor: 'var(--amber-primary)' }}>
-              STANDARD DOSSIER
-            </div>
-            <h3 className="font-title" style={{ fontSize: '1.2rem', color: 'var(--amber-light)' }}>4 Suspects • 4 Clues</h3>
-            <p style={{ fontSize: '0.85rem', color: '#aba191' }}>
-              The standard Scotland Yard inquiry with 2 plausible red herrings. Demands careful scrutiny
-              of conflicting alibis and estate room access.
-            </p>
-          </div>
-
-          <div className="complexity-card">
-            <div className="complexity-badge" style={{ color: '#ff9fb2', borderColor: 'var(--burgundy-light)' }}>
-              COMPLEX DOSSIER
-            </div>
-            <h3 className="font-title" style={{ fontSize: '1.2rem', color: '#ff9fb2' }}>5 Suspects • 6 Clues</h3>
-            <p style={{ fontSize: '0.85rem', color: '#aba191' }}>
-              An intricate web featuring 3 red herrings and deep branching relationships. Only a rigorous
-              forensic deduction will pinpoint the sole culprit.
-            </p>
-          </div>
+        <div className="dispatch-form-card">
+          <StartScreen
+            onStartInvestigation={onStartInvestigation}
+            loading={loading}
+            error={error}
+          />
         </div>
       </section>
 
-      {/* 6. LIVE CASE LAUNCH & DISPATCH */}
-      <section id="case-launch" className="noir-section noir-dispatch-section">
-        <div className="section-header-block" style={{ marginBottom: '1.5rem' }}>
-          <span className="badge badge-amber">DISPATCH TERMINAL</span>
-          <h2 className="section-title font-title">OPEN CONFIDENTIAL CASE FILE</h2>
-          <p className="section-subtext">
-            Configure your investigation parameters below to generate a live procedural case.
-          </p>
-        </div>
-
-        {/* Embedded Live StartScreen Form */}
-        <StartScreen
-          onStartInvestigation={onStartInvestigation}
-          loading={loading}
-          error={error}
-        />
-      </section>
-
-      {/* 7. FOOTER */}
-      <footer className="noir-footer">
-        <div className="noir-footer-inner">
-          <div className="noir-footer-brand">
-            <span className="font-title" style={{ fontSize: '1.15rem', color: 'var(--amber-light)' }}>
-              THE LAST CLUE
-            </span>
-            <p style={{ fontSize: '0.8rem', color: '#8a8275', margin: '4px 0 0' }}>
-              "Every mystery has an answer. Every answer leaves a trace."
-            </p>
+      {/* 6. VICTORIAN DETECTIVE FOOTER */}
+      <footer className="adventure-footer">
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <span className="font-title footer-title">{t('app.title')}</span>
+            <p className="footer-tagline font-serif">{t('app.tagline')}</p>
           </div>
 
-          <div className="noir-footer-meta">
-            <span style={{ fontSize: '0.75rem', color: '#687282', fontFamily: 'var(--font-mono)' }}>
-              PURE PROCEDURAL DSA • NO THIRD-PARTY AI • DETERMINISTIC PRNG
-            </span>
+          <div className="footer-crests font-mono">
+            <span>SCOTLAND YARD ARCHIVAL UNIT</span>
+            <span className="footer-dot">•</span>
+            <span>100% DETERMINISTIC PRNG</span>
+            <span className="footer-dot">•</span>
+            <span>NO SPOILER LEAKS</span>
           </div>
         </div>
       </footer>

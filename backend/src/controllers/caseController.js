@@ -24,9 +24,9 @@ const {
  */
 const generateCase = (req, res) => {
   try {
-    const { difficulty, seed } = req.body || {};
+    const { difficulty, seed, theme } = req.body || {};
 
-    const caseData = CaseService.generateCase({ difficulty, seed });
+    const caseData = CaseService.generateCase({ difficulty, seed, theme });
 
     return res.status(200).json({
       success: true,

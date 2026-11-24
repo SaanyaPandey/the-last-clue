@@ -1,4 +1,7 @@
 import React from 'react';
+import MovementControlSelector from '../components/MovementControlSelector';
+import { useLanguage } from '../localization/LanguageContext';
+import { useControls } from '../context/ControlsContext';
 
 /**
  * Handcrafted vector icon components for detective tools
@@ -69,12 +72,7 @@ function SoundIcon({ muted }) {
 
 /**
  * GameHUD Component
- * In-game detective interface designed like real Victorian field equipment:
- * - Compact location indicator with brass compass beacon
- * - Subtle narrative objective
- * - Restrained typography (Cinzel & JetBrains Mono)
- * - Vector equipment tool buttons without emoji substitutes
- * - Tactile proximity action banner
+ * In-game detective interface designed like real Victorian field equipment.
  */
 export default function GameHUD({
   currentRoomName,
@@ -90,8 +88,17 @@ export default function GameHUD({
   onOpenBoard,
   onOpenSuspects,
   onOpenAccusation,
+  onOpenBriefing,
+  onOpenHint,
+  hintsUsedCount = 0,
+  poiCount = 0,
+  hasOpenedBoard = false,
+  hasOpenedJournal = false,
   onVirtualMove
 }) {
+  const { t } = useLanguage();
+  const { controlMode } = useControls();
+
   return (
     <div className="game-hud-layer">
       {/* 1. TOP STATUS BAR (Detective Field Equipment) */}
@@ -110,26 +117,55 @@ export default function GameHUD({
         {/* Evidence Progress Counter */}
         <div className="hud-progress-group">
           <div className="hud-progress-pill font-mono">
-            <span className="pill-label">EVIDENCE:</span>
+            <span className="pill-label">{t('hud.evidenceLabel')}</span>
             <span className="pill-value">{cluesSecuredCount} / {totalCluesCount}</span>
           </div>
           <div className="hud-progress-pill font-mono">
-            <span className="pill-label">SOLVABILITY:</span>
+            <span className="pill-label">{t('hud.solvabilityLabel')}</span>
             <span className="pill-value">{progressPercentage}%</span>
           </div>
         </div>
 
         {/* Handcrafted Tool Buttons */}
         <div className="hud-controls-group">
+          {onOpenBriefing && (
+            <button
+              type="button"
+              className="hud-tool-btn"
+              onClick={onOpenBriefing}
+              title="Case Dossier & Briefing"
+              aria-label="Case Briefing"
+            >
+              <span style={{ fontSize: '1rem' }}>📋</span>
+              <span className="hud-btn-text">{t('briefing.headerBadge') || 'Briefing'}</span>
+            </button>
+          )}
+
+          {onOpenHint && (
+            <button
+              type="button"
+              className="hud-tool-btn hud-hint-btn"
+              onClick={onOpenHint}
+              title="Get Detective Hint"
+              aria-label="Detective Hint"
+            >
+              <span style={{ fontSize: '1rem' }}>💡</span>
+              <span className="hud-btn-text">{t('hints.title') || 'Hint'}</span>
+              {hintsUsedCount > 0 && (
+                <span className="hud-hint-badge font-mono">{hintsUsedCount}</span>
+              )}
+            </button>
+          )}
+
           <button
             type="button"
             className="hud-tool-btn"
             onClick={onOpenJournal}
-            title="Open Field Notebook [J]"
-            aria-label="Open Field Notebook"
+            title={`${t('hud.journalBtn')} [J]`}
+            aria-label={t('hud.journalBtn')}
           >
             <JournalIcon />
-            <span className="hud-btn-text">Journal</span>
+            <span className="hud-btn-text">{t('hud.journalBtn')}</span>
             <span className="hud-key font-mono">J</span>
           </button>
 
@@ -137,11 +173,11 @@ export default function GameHUD({
             type="button"
             className="hud-tool-btn"
             onClick={onOpenBoard}
-            title="Open Evidence Pinboard [B]"
-            aria-label="Open Evidence Pinboard"
+            title={`${t('hud.boardBtn')} [B]`}
+            aria-label={t('hud.boardBtn')}
           >
             <BoardIcon />
-            <span className="hud-btn-text">Board</span>
+            <span className="hud-btn-text">{t('hud.boardBtn')}</span>
             <span className="hud-key font-mono">B</span>
           </button>
 
@@ -149,11 +185,11 @@ export default function GameHUD({
             type="button"
             className="hud-tool-btn"
             onClick={onOpenSuspects}
-            title="Review Suspect Dossiers [S]"
-            aria-label="Review Suspect Dossiers"
+            title={`${t('hud.suspectsBtn')} [S]`}
+            aria-label={t('hud.suspectsBtn')}
           >
             <SuspectsIcon />
-            <span className="hud-btn-text">Suspects</span>
+            <span className="hud-btn-text">{t('hud.suspectsBtn')}</span>
             <span className="hud-key font-mono">S</span>
           </button>
 
@@ -161,11 +197,11 @@ export default function GameHUD({
             type="button"
             className="hud-tool-btn hud-accuse-btn"
             onClick={onOpenAccusation}
-            title="File Indictment Accusation [A]"
-            aria-label="File Indictment Accusation"
+            title={`${t('hud.accuseBtn')} [A]`}
+            aria-label={t('hud.accuseBtn')}
           >
             <ScalesIcon />
-            <span className="hud-btn-text">Accuse</span>
+            <span className="hud-btn-text">{t('hud.accuseBtn')}</span>
             <span className="hud-key font-mono">A</span>
           </button>
 
@@ -173,11 +209,14 @@ export default function GameHUD({
             type="button"
             className="hud-sound-btn"
             onClick={onToggleAudio}
-            title={isAudioMuted ? 'Unmute Ambient Manor Sound' : 'Mute Ambient Manor Sound'}
-            aria-label={isAudioMuted ? 'Unmute Ambient Sound' : 'Mute Ambient Sound'}
+            title={isAudioMuted ? t('hud.unmuteSound') : t('hud.muteSound')}
+            aria-label={isAudioMuted ? t('hud.unmuteSound') : t('hud.muteSound')}
           >
             <SoundIcon muted={isAudioMuted} />
           </button>
+
+          {/* In-HUD Movement Controls Switcher */}
+          <MovementControlSelector variant="compact" />
         </div>
       </header>
 
@@ -189,7 +228,7 @@ export default function GameHUD({
           </div>
           <div className="interaction-details">
             <span className="interaction-action-label font-mono">
-              {nearbyObject.isDoor ? 'PASSAGEWAY' : 'FORENSIC EXAM'}
+              {nearbyObject.isDoor ? t('hud.passageway') : t('hud.forensicExam')}
             </span>
             <span className="interaction-target-name font-title">
               {nearbyObject.title}
@@ -200,7 +239,7 @@ export default function GameHUD({
             className="interaction-trigger-btn"
             onClick={onInteractNearby}
           >
-            {nearbyObject.isDoor ? 'Pass Through Doorway →' : 'Examine Object →'}
+            {nearbyObject.isDoor ? t('hud.passThroughDoor') : t('hud.examineObject')}
           </button>
         </div>
       )}
@@ -247,6 +286,16 @@ export default function GameHUD({
             ▶
           </button>
         </div>
+      </div>
+
+      {/* 4. ACTIVE CONTROL MODE INSTRUCTION PILL */}
+      <div className="hud-control-instruction-pill font-mono" role="status">
+        <span className="ctrl-pill-icon" aria-hidden="true">
+          {controlMode === 'both' ? '⌨ + 🖱' : controlMode === 'keyboard' ? '⌨' : '🖱'}
+        </span>
+        <span className="ctrl-pill-text">
+          {t(`controls.hudTip${controlMode.charAt(0).toUpperCase() + controlMode.slice(1)}`)}
+        </span>
       </div>
     </div>
   );

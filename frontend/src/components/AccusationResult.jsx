@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { requestCaseSolutionReveal } from '../services/caseApi';
+import { useLanguage } from '../localization/LanguageContext';
 
 /**
  * AccusationResult Component
@@ -17,15 +18,14 @@ export default function AccusationResult({
   const [unsealedArchive, setUnsealedArchive] = useState(null);
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealError, setRevealError] = useState(null);
+  const { t, getSuspectText, getLocationText, getWeaponText, getMotiveText } = useLanguage();
 
   if (!filingRecord) return null;
 
   const {
     isCorrect,
-    feedback,
     suspect,
     rationale,
-    timestamp,
     seed,
     status
   } = filingRecord;
@@ -43,10 +43,16 @@ export default function AccusationResult({
     if (result.success && result.data?.unsealedFindings) {
       setUnsealedArchive(result.data.unsealedFindings);
     } else {
-      setRevealError(result.error || 'Failed to unseal confidential dossier.');
+      setRevealError(result.error || t('feedback.errorDefault'));
     }
     setIsRevealing(false);
   };
+
+  const accusedId = suspect?.id || filingRecord.accusedSuspectId;
+  const localizedAccused = getSuspectText(accusedId);
+  const feedbackMessage = isCorrect
+    ? t('verdict.victoryFeedback')
+    : t('verdict.defeatFeedback');
 
   return (
     <div className="filed-dossier" role="region" aria-label="Authoritative Accusation Verdict">
@@ -72,7 +78,7 @@ export default function AccusationResult({
             background: isCorrect ? 'rgba(46, 125, 50, 0.2)' : 'rgba(139, 40, 60, 0.2)'
           }}
         >
-          {isCorrect ? 'CASE SOLVED • GUILTY VERDICT CONFIRMED' : 'INDICTMENT REJECTED • CASE CLOSED'}
+          {isCorrect ? t('verdict.victoryBadge') : t('verdict.defeatBadge')}
         </span>
 
         <h3
@@ -83,8 +89,22 @@ export default function AccusationResult({
             marginTop: '0.4rem'
           }}
         >
-          {isCorrect ? 'PERPETRATOR CONVICTED' : 'INSUFFICIENT FORENSIC EVIDENCE'}
+          {isCorrect ? t('verdict.victoryTitle') : t('verdict.defeatTitle')}
         </h3>
+
+        {/* Child-friendly Star Rating & Detective Rank */}
+        {isCorrect && (
+          <div style={{ marginTop: '0.4rem', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.35rem' }}>
+              <span style={{ fontSize: '1.5rem', color: '#ffd166', filter: 'drop-shadow(0 0 6px rgba(255, 209, 102, 0.6))' }}>★</span>
+              <span style={{ fontSize: '1.5rem', color: '#ffd166', filter: 'drop-shadow(0 0 6px rgba(255, 209, 102, 0.6))' }}>★</span>
+              <span style={{ fontSize: '1.5rem', color: '#ffd166', filter: 'drop-shadow(0 0 6px rgba(255, 209, 102, 0.6))' }}>★</span>
+            </div>
+            <span style={{ fontSize: '0.78rem', color: '#ffd166', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
+              ✦ MASTER SLEUTH VERDICT ✦
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Official Feedback from Scotland Yard */}
@@ -99,33 +119,45 @@ export default function AccusationResult({
           fontSize: '0.85rem'
         }}
       >
-        <p style={{ margin: '0 0 0.75rem', color: 'var(--text-ivory)', fontStyle: 'italic' }}>
-          "{feedback || (isCorrect ? 'The accused has been convicted.' : 'Charges dismissed.')}"
+        <p style={{ margin: '0 0 0.75rem', color: 'var(--text-ivory)', fontStyle: 'italic', lineHeight: 1.5 }}>
+          "{feedbackMessage}"
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '0.65rem' }}>
           <div>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>CASE REFERENCE:</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>
+              {t('verdict.caseRef')}
+            </span>
             <strong style={{ color: 'var(--text-ivory)' }}>{caseId || filingRecord.caseId || 'CASE-ACTIVE'}</strong>
           </div>
           <div>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>PRNG SEED:</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>
+              {t('verdict.seed')}
+            </span>
             <strong style={{ color: 'var(--amber-light)', fontFamily: 'var(--font-mono)' }}>{seed}</strong>
           </div>
           <div>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>ACCUSED SUSPECT:</span>
-            <strong style={{ color: isCorrect ? '#a5d6a7' : '#ff9fb2' }}>{suspect?.name || filingRecord.accusedSuspectId}</strong>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>
+              {t('verdict.accused')}
+            </span>
+            <strong style={{ color: isCorrect ? '#a5d6a7' : '#ff9fb2' }}>
+              {localizedAccused.name || accusedId}
+            </strong>
           </div>
           <div>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>VERDICT STATUS:</span>
-            <span style={{ color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{status || (isCorrect ? 'SOLVED' : 'CLOSED')}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>
+              {t('verdict.status')}
+            </span>
+            <span style={{ color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+              {status || (isCorrect ? t('verdict.statusSolved') : t('verdict.statusClosed'))}
+            </span>
           </div>
         </div>
 
         {rationale && (
           <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', marginTop: '0.65rem', paddingTop: '0.5rem' }}>
             <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', display: 'block' }}>
-              DETECTIVE'S STATEMENT RECORDED:
+              {t('verdict.statementRecorded')}
             </span>
             <p style={{ fontStyle: 'italic', color: '#ded7cb', margin: '3px 0 0' }}>
               "{rationale}"
@@ -153,7 +185,7 @@ export default function AccusationResult({
             onClick={handleRequestReveal}
             disabled={isRevealing}
           >
-            {isRevealing ? 'Unsealing Scotland Yard Vault...' : '🔓 Unseal Confidential Dossier (Post-Game Reveal)'}
+            {isRevealing ? t('verdict.unsealingBtn') : t('verdict.unsealBtn')}
           </button>
           {revealError && (
             <p style={{ color: '#ff9fb2', fontSize: '0.75rem', marginTop: '4px' }}>
@@ -174,33 +206,33 @@ export default function AccusationResult({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span className="badge badge-amber">UNSEALED SCOTLAND YARD FINDINGS</span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>AUTHORITATIVE TRUTH</span>
+            <span className="badge badge-amber">{t('verdict.unsealedBadge')}</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{t('verdict.authoritativeTruth')}</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', fontSize: '0.82rem' }}>
             <div>
-              <span style={{ color: 'var(--text-muted)', display: 'block' }}>PERPETRATOR:</span>
+              <span style={{ color: 'var(--text-muted)', display: 'block' }}>{t('verdict.perpetratorTitle')}</span>
               <strong style={{ color: 'var(--amber-light)' }}>
-                {unsealedArchive.perpetrator?.replace('suspect_', '').replace(/_/g, ' ').toUpperCase()}
+                {getSuspectText(unsealedArchive.perpetrator).name || unsealedArchive.perpetrator?.replace('suspect_', '').replace(/_/g, ' ').toUpperCase()}
               </strong>
             </div>
             <div>
-              <span style={{ color: 'var(--text-muted)', display: 'block' }}>CRIME SCENE:</span>
+              <span style={{ color: 'var(--text-muted)', display: 'block' }}>{t('verdict.crimeScene')}</span>
               <strong style={{ color: '#72cbcf' }}>
-                {unsealedArchive.crimeScene?.replace('location_', '').replace(/_/g, ' ').toUpperCase()}
+                {getLocationText(unsealedArchive.crimeScene).name || unsealedArchive.crimeScene?.replace('location_', '').replace(/_/g, ' ').toUpperCase()}
               </strong>
             </div>
             <div>
-              <span style={{ color: 'var(--text-muted)', display: 'block' }}>MURDER WEAPON:</span>
+              <span style={{ color: 'var(--text-muted)', display: 'block' }}>{t('verdict.murderWeapon')}</span>
               <strong style={{ color: '#e5879a' }}>
-                {unsealedArchive.weaponUsed?.replace('weapon_', '').replace(/_/g, ' ').toUpperCase()}
+                {getWeaponText(unsealedArchive.weaponUsed).name || unsealedArchive.weaponUsed?.replace('weapon_', '').replace(/_/g, ' ').toUpperCase()}
               </strong>
             </div>
             <div>
-              <span style={{ color: 'var(--text-muted)', display: 'block' }}>CRIMINAL MOTIVE:</span>
+              <span style={{ color: 'var(--text-muted)', display: 'block' }}>{t('verdict.criminalMotive')}</span>
               <strong style={{ color: '#b5c2d4' }}>
-                {unsealedArchive.motiveDeduction?.replace('motive_', '').replace(/_/g, ' ').toUpperCase()}
+                {getMotiveText(unsealedArchive.motiveDeduction).name || unsealedArchive.motiveDeduction?.replace('motive_', '').replace(/_/g, ' ').toUpperCase()}
               </strong>
             </div>
           </div>
@@ -215,7 +247,7 @@ export default function AccusationResult({
           style={{ padding: '0.65rem 1.25rem' }}
           onClick={onClose}
         >
-          Review Evidence Board
+          {t('verdict.reviewBoardBtn')}
         </button>
         <button
           type="button"
@@ -223,7 +255,7 @@ export default function AccusationResult({
           style={{ padding: '0.65rem 1.4rem' }}
           onClick={onNewCase}
         >
-          Investigate New Case
+          {t('verdict.newCaseBtn')}
         </button>
       </div>
     </div>

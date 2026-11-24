@@ -30,9 +30,9 @@ export default class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="error-container" role="alert" style={{ margin: '4rem auto', maxWidth: '600px' }}>
-          <h2 className="error-title font-title">INVESTIGATION SYSTEM INTERRUPTED</h2>
+          <h2 className="error-title font-title">INVESTIGATION INTERRUPTED • RUKAWAT AAYI</h2>
           <p style={{ color: '#aba191', fontSize: '0.9rem', lineHeight: 1.6 }}>
-            An unexpected error occurred while loading the crime scene workspace:
+            An unexpected error occurred while loading the crime scene / Game load karte waqt koi takleef hui hai:
           </p>
           <pre
             style={{
@@ -54,7 +54,7 @@ export default class ErrorBoundary extends React.Component {
               className="btn-retry"
               onClick={this.handleReset}
             >
-              Restart Investigation
+              Restart Investigation / Dobara Shuru Karein
             </button>
           </div>
         </div>

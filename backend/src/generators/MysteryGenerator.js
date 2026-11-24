@@ -20,12 +20,25 @@ const SeededRandom = require('../utils/SeededRandom');
 const Graph = require('../algorithms/Graph');
 const { solveWithBacktracking } = require('../algorithms/Backtracking');
 const CaseValidator = require('./CaseValidator');
+const { getThematicPool } = require('./data/thematicPools');
 
-const suspectsPool = require('./data/suspects');
-const locationsPool = require('./data/locations');
-const weaponsPool = require('./data/weapons');
-const motivesPool = require('./data/motives');
-const cluesPool = require('./data/clues');
+const THEMES = ['trophy', 'science', 'treasure', 'library'];
+
+/**
+ * Deterministically maps a numeric or string seed to one of the 4 mystery themes.
+ * @param {number|string} seed
+ * @returns {'trophy'|'science'|'treasure'|'library'}
+ */
+function resolveThemeFromSeed(seed) {
+  let hash = 0;
+  const str = String(seed !== undefined && seed !== null ? seed : 'default');
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % THEMES.length;
+  return THEMES[index];
+}
 
 class MysteryGenerator {
   /**
@@ -33,13 +46,25 @@ class MysteryGenerator {
    *
    * @param {number|string} seed - The random seed for reproducibility.
    * @param {'easy'|'medium'|'hard'} [difficulty='medium'] - Target difficulty.
+   * @param {'trophy'|'science'|'treasure'|'library'} [requestedTheme=null] - Optional preferred theme.
    * @returns {Object} Complete case object.
    * @throws {Error} If generation fails after retry attempts.
    */
-  static generateCase(seed, difficulty = 'medium') {
+  static generateCase(seed, difficulty = 'medium', requestedTheme = null) {
     const normalizedDifficulty = ['easy', 'medium', 'hard'].includes(difficulty)
       ? difficulty
       : 'medium';
+
+    const theme = requestedTheme && THEMES.includes(requestedTheme)
+      ? requestedTheme
+      : resolveThemeFromSeed(seed);
+
+    const thematicPool = getThematicPool(theme);
+    const suspectsPool = thematicPool.suspects;
+    const locationsPool = thematicPool.locations;
+    const weaponsPool = thematicPool.weapons;
+    const motivesPool = thematicPool.motives;
+    const cluesPool = thematicPool.clues;
 
     const rng = new SeededRandom(seed);
     const caseId = `CASE-${seed}-${normalizedDifficulty.toUpperCase().slice(0, 3)}`;
@@ -308,6 +333,7 @@ class MysteryGenerator {
     const caseData = {
       caseId,
       seed,
+      theme,
       difficulty: normalizedDifficulty,
       suspects: selectedSuspects,
       locations: selectedLocations,
